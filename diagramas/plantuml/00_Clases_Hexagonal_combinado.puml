@@ -1,0 +1,956 @@
+' TP202610051 - Diagramas de Clases UML con Arquitectura Hexagonal
+' Formato: PlantUML
+' Fecha de versión: 2026-05-15
+' Sistema Web de Recomendación Adaptativa y Explicable
+
+@startuml Vista_general_hexagonal_por_microservicio
+title Vista general hexagonal por microservicio
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class Frontend <<Cliente>> {
+  React.js
+}
+
+class APIGateway <<Inbound Gateway>> {
+  Amazon API Gateway
+}
+
+class UsuariosMS <<Microservicio Hexagonal>> {
+  FastAPI
+  BD Usuarios
+}
+
+class CursosRecursosMS <<Microservicio Hexagonal>> {
+  FastAPI
+  BD Cursos y Recursos
+  S3
+}
+
+class TrazabilidadMS <<Microservicio Hexagonal>> {
+  FastAPI
+  BD Trazabilidad
+}
+
+class RecomendacionMS <<Microservicio Hexagonal>> {
+  Python / pyKT
+  BD Recomendación
+}
+
+class XaiMS <<Microservicio Hexagonal>> {
+  Python
+  BD XAI
+}
+
+class IntegracionLmsMS <<Microservicio Hexagonal>> {
+  FastAPI
+  BD Integración LMS
+}
+
+class EventBridge <<Event Bus>> {
+}
+
+class SQS <<Queue>> {
+}
+
+class Lambdas <<AWS Lambda>> {
+  Moodle
+  Interacciones
+  Alertas
+  Recursos
+}
+
+Frontend --> APIGateway : consume REST/HTTPS
+APIGateway --> UsuariosMS : enruta solicitudes
+APIGateway --> CursosRecursosMS : enruta solicitudes
+APIGateway --> TrazabilidadMS : enruta solicitudes
+APIGateway --> RecomendacionMS : enruta solicitudes
+APIGateway --> XaiMS : enruta solicitudes
+APIGateway --> IntegracionLmsMS : enruta solicitudes
+RecomendacionMS ..> TrazabilidadMS : consulta historial
+RecomendacionMS ..> CursosRecursosMS : consulta recursos
+RecomendacionMS ..> XaiMS : solicita explicación
+CursosRecursosMS ..> IntegracionLmsMS : consulta cursos LMS
+TrazabilidadMS ..> IntegracionLmsMS : consulta interacciones LMS
+UsuariosMS ..> EventBridge : publica eventos
+CursosRecursosMS ..> EventBridge : publica eventos
+TrazabilidadMS ..> EventBridge : publica eventos
+RecomendacionMS ..> EventBridge : publica eventos
+XaiMS ..> EventBridge : publica eventos
+IntegracionLmsMS ..> EventBridge : publica eventos
+EventBridge --> SQS : enruta eventos
+SQS --> Lambdas : activa procesamiento
+@enduml
+
+@startuml Microservicio_de_Usuarios
+title Microservicio de Usuarios
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class UsuariosController <<Inbound Adapter>> {
+  +registrar()
+  +login()
+  +cerrarSesion()
+  +recuperarPassword()
+  +gestionarRoles()
+}
+
+class AutenticarUsuarioUseCase <<Use Case>> {
+  +execute(correo, password)
+}
+
+class RegistrarUsuarioUseCase <<Use Case>> {
+  +execute(datosRegistro)
+}
+
+class GestionarRolesUseCase <<Use Case>> {
+  +asignarRol(usuarioId, rolId)
+  +revocarRol(usuarioId, rolId)
+}
+
+class Usuario <<Domain>> {
+  +UUID id
+  +String correoInstitucional
+  +String passwordHash
+  +EstadoUsuario estado
+  +validarCorreo()
+  +activar()
+  +bloquear()
+}
+
+class Rol <<Domain>> {
+  +UUID id
+  +String nombre
+  +String descripcion
+}
+
+class Permiso <<Domain>> {
+  +UUID id
+  +String codigo
+  +String descripcion
+}
+
+class Sesion <<Domain>> {
+  +UUID id
+  +UUID usuarioId
+  +String jwtId
+  +DateTime expiraEn
+  +invalidar()
+}
+
+class UsuarioRepositoryPort <<Output Port>> {
+  +findByCorreo(correo)
+  +findById(id)
+  +save(usuario)
+}
+
+class RolRepositoryPort <<Output Port>> {
+  +findByNombre(nombre)
+  +save(rol)
+}
+
+class TokenPort <<Output Port>> {
+  +generar(usuario)
+  +validar(token)
+  +invalidar(token)
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class UsuarioPostgresAdapter <<Outbound Adapter>> {
+  +findByCorreo(correo)
+  +save(usuario)
+}
+
+class RolPostgresAdapter <<Outbound Adapter>> {
+  +findByNombre(nombre)
+  +save(rol)
+}
+
+class JwtAdapter <<Outbound Adapter>> {
+  +generar(usuario)
+  +validar(token)
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class UsuarioAutenticadoEvent <<Domain Event>> {
+  +UUID usuarioId
+  +String rol
+  +DateTime occurredAt
+}
+
+UsuariosController --> AutenticarUsuarioUseCase
+UsuariosController --> RegistrarUsuarioUseCase
+UsuariosController --> GestionarRolesUseCase
+AutenticarUsuarioUseCase --> Usuario
+AutenticarUsuarioUseCase --> Sesion
+RegistrarUsuarioUseCase --> Usuario
+GestionarRolesUseCase --> Usuario
+GestionarRolesUseCase --> Rol
+Rol --> Permiso
+AutenticarUsuarioUseCase --> UsuarioRepositoryPort
+AutenticarUsuarioUseCase --> TokenPort
+AutenticarUsuarioUseCase --> EventPublisherPort
+RegistrarUsuarioUseCase --> UsuarioRepositoryPort
+GestionarRolesUseCase --> RolRepositoryPort
+UsuarioPostgresAdapter ..|> UsuarioRepositoryPort
+RolPostgresAdapter ..|> RolRepositoryPort
+JwtAdapter ..|> TokenPort
+EventBridgeAdapter ..|> EventPublisherPort
+AutenticarUsuarioUseCase ..> UsuarioAutenticadoEvent : crea
+EventPublisherPort ..> UsuarioAutenticadoEvent : publica
+@enduml
+
+@startuml Microservicio_de_Cursos_y_Recursos
+title Microservicio de Cursos y Recursos
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class CursosController <<Inbound Adapter>> {
+  +consultarCursos()
+  +consultarActividades()
+  +registrarRecurso()
+  +buscarRecursosCandidatos()
+}
+
+class S3EventConsumer <<Inbound Adapter>> {
+  +procesarArchivoSubido()
+}
+
+class GestionarCursoUseCase <<Use Case>> {
+  +execute(curso)
+}
+
+class GestionarActividadUseCase <<Use Case>> {
+  +execute(actividad)
+}
+
+class GestionarRecursoUseCase <<Use Case>> {
+  +execute(recurso)
+}
+
+class BuscarRecursosCandidatosUseCase <<Use Case>> {
+  +execute(criterios)
+}
+
+class Curso <<Domain>> {
+  +UUID id
+  +String codigo
+  +String nombre
+  +EstadoCurso estado
+}
+
+class Actividad <<Domain>> {
+  +UUID id
+  +UUID cursoId
+  +String titulo
+  +TipoActividad tipo
+  +Float puntajeMaximo
+}
+
+class RecursoEducativo <<Domain>> {
+  +UUID id
+  +UUID cursoId
+  +String titulo
+  +TipoRecurso tipo
+  +String nivelDificultad
+  +Boolean activo
+}
+
+class MetadataRecurso <<Domain>> {
+  +UUID recursoId
+  +String etiquetas
+  +String competencia
+  +Integer tiempoEstimado
+}
+
+class CursoRepositoryPort <<Output Port>> {
+  +findById(id)
+  +save(curso)
+}
+
+class RecursoRepositoryPort <<Output Port>> {
+  +findCandidatos(criterios)
+  +save(recurso)
+}
+
+class StoragePort <<Output Port>> {
+  +upload(file)
+  +getUrl(s3Key)
+}
+
+class LmsClientPort <<Output Port>> {
+  +obtenerCursos()
+  +obtenerActividades()
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class CursoPostgresAdapter <<Outbound Adapter>> {
+  +findById(id)
+  +save(curso)
+}
+
+class RecursoPostgresAdapter <<Outbound Adapter>> {
+  +findCandidatos(criterios)
+  +save(recurso)
+}
+
+class S3Adapter <<Outbound Adapter>> {
+  +upload(file)
+  +getUrl(s3Key)
+}
+
+class IntegracionLmsRestAdapter <<Outbound Adapter>> {
+  +obtenerCursos()
+  +obtenerActividades()
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class RecursoActualizadoEvent <<Domain Event>> {
+  +UUID recursoId
+  +UUID cursoId
+  +DateTime occurredAt
+}
+
+CursosController --> GestionarCursoUseCase
+CursosController --> GestionarActividadUseCase
+CursosController --> GestionarRecursoUseCase
+CursosController --> BuscarRecursosCandidatosUseCase
+S3EventConsumer --> GestionarRecursoUseCase
+GestionarCursoUseCase --> Curso
+GestionarActividadUseCase --> Actividad
+GestionarRecursoUseCase --> RecursoEducativo
+GestionarRecursoUseCase --> MetadataRecurso
+BuscarRecursosCandidatosUseCase --> RecursoEducativo
+Curso "1" --> "0..*" Actividad
+Curso "1" --> "0..*" RecursoEducativo
+RecursoEducativo "1" --> "1" MetadataRecurso
+GestionarCursoUseCase --> CursoRepositoryPort
+GestionarActividadUseCase --> CursoRepositoryPort
+GestionarRecursoUseCase --> RecursoRepositoryPort
+GestionarRecursoUseCase --> StoragePort
+GestionarCursoUseCase --> LmsClientPort
+GestionarActividadUseCase --> LmsClientPort
+GestionarRecursoUseCase --> EventPublisherPort
+BuscarRecursosCandidatosUseCase --> RecursoRepositoryPort
+CursoPostgresAdapter ..|> CursoRepositoryPort
+RecursoPostgresAdapter ..|> RecursoRepositoryPort
+S3Adapter ..|> StoragePort
+IntegracionLmsRestAdapter ..|> LmsClientPort
+EventBridgeAdapter ..|> EventPublisherPort
+GestionarRecursoUseCase ..> RecursoActualizadoEvent : crea
+EventPublisherPort ..> RecursoActualizadoEvent : publica
+@enduml
+
+@startuml Microservicio_de_Integracion_LMS
+title Microservicio de Integración LMS
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class LmsController <<Inbound Adapter>> {
+  +consultarCursos()
+  +consultarActividades()
+  +consultarCalificaciones()
+  +consultarInteracciones()
+}
+
+class MoodleSyncLambdaHandler <<Inbound Adapter>> {
+  +handleSchedule()
+}
+
+class ConsultarCursosLmsUseCase <<Use Case>> {
+  +execute()
+}
+
+class ConsultarActividadesLmsUseCase <<Use Case>> {
+  +execute()
+}
+
+class ConsultarCalificacionesLmsUseCase <<Use Case>> {
+  +execute()
+}
+
+class SincronizarMoodleUseCase <<Use Case>> {
+  +execute()
+}
+
+class CursoLMS <<Domain>> {
+  +UUID id
+  +String moodleCourseId
+  +String nombre
+  +String codigo
+}
+
+class ActividadLMS <<Domain>> {
+  +UUID id
+  +String moodleActivityId
+  +String moodleCourseId
+  +String tipo
+}
+
+class CalificacionLMS <<Domain>> {
+  +UUID id
+  +String moodleUserId
+  +String moodleActivityId
+  +Float puntaje
+}
+
+class InteraccionLMS <<Domain>> {
+  +UUID id
+  +String moodleEventId
+  +String moodleUserId
+  +String accion
+  +DateTime fechaEvento
+}
+
+class LmsRepositoryPort <<Output Port>> {
+  +saveCursos(cursos)
+  +findCursos()
+  +findInteracciones(filtros)
+}
+
+class MoodleApiPort <<Output Port>> {
+  +getCourses()
+  +getActivities()
+  +getGrades()
+  +getEvents()
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class LmsPostgresAdapter <<Outbound Adapter>> {
+  +saveCursos(cursos)
+  +findCursos()
+  +findInteracciones(filtros)
+}
+
+class MoodleApiAdapter <<Outbound Adapter>> {
+  +getCourses()
+  +getActivities()
+  +getGrades()
+  +getEvents()
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class DatosLmsSincronizadosEvent <<Domain Event>> {
+  +UUID sincronizacionId
+  +Integer registrosProcesados
+  +DateTime occurredAt
+}
+
+LmsController --> ConsultarCursosLmsUseCase
+LmsController --> ConsultarActividadesLmsUseCase
+LmsController --> ConsultarCalificacionesLmsUseCase
+MoodleSyncLambdaHandler --> SincronizarMoodleUseCase
+ConsultarCursosLmsUseCase --> CursoLMS
+ConsultarActividadesLmsUseCase --> ActividadLMS
+ConsultarCalificacionesLmsUseCase --> CalificacionLMS
+SincronizarMoodleUseCase --> CursoLMS
+SincronizarMoodleUseCase --> ActividadLMS
+SincronizarMoodleUseCase --> CalificacionLMS
+SincronizarMoodleUseCase --> InteraccionLMS
+ConsultarCursosLmsUseCase --> LmsRepositoryPort
+ConsultarActividadesLmsUseCase --> LmsRepositoryPort
+ConsultarCalificacionesLmsUseCase --> LmsRepositoryPort
+SincronizarMoodleUseCase --> MoodleApiPort
+SincronizarMoodleUseCase --> LmsRepositoryPort
+SincronizarMoodleUseCase --> EventPublisherPort
+LmsPostgresAdapter ..|> LmsRepositoryPort
+MoodleApiAdapter ..|> MoodleApiPort
+EventBridgeAdapter ..|> EventPublisherPort
+SincronizarMoodleUseCase ..> DatosLmsSincronizadosEvent : crea
+EventPublisherPort ..> DatosLmsSincronizadosEvent : publica
+@enduml
+
+@startuml Microservicio_de_Trazabilidad
+title Microservicio de Trazabilidad
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class TrazabilidadController <<Inbound Adapter>> {
+  +registrarInteraccion()
+  +consultarProgreso()
+  +calcularIndicadores()
+}
+
+class InteraccionEventConsumer <<Inbound Adapter>> {
+  +procesarEventoInteraccion()
+}
+
+class RegistrarInteraccionUseCase <<Use Case>> {
+  +execute(interaccion)
+}
+
+class ConsultarProgresoUseCase <<Use Case>> {
+  +execute(estudianteId, cursoId)
+}
+
+class CalcularIndicadoresUseCase <<Use Case>> {
+  +execute(estudianteId, cursoId)
+}
+
+class ProgresoAcademico <<Domain>> {
+  +UUID estudianteId
+  +UUID cursoId
+  +Float porcentajeAvance
+  +NivelRiesgo nivelRiesgo
+  +actualizar()
+}
+
+class InteraccionAcademica <<Domain>> {
+  +UUID id
+  +UUID estudianteId
+  +UUID cursoId
+  +UUID actividadId
+  +TipoInteraccion tipo
+  +DateTime fecha
+}
+
+class RespuestaActividad <<Domain>> {
+  +UUID id
+  +String preguntaId
+  +String respuesta
+  +Boolean correcta
+  +Float puntaje
+}
+
+class IndicadorTrazabilidad <<Domain>> {
+  +String nombre
+  +Float valor
+  +String unidad
+}
+
+class TrazabilidadRepositoryPort <<Output Port>> {
+  +saveInteraccion(interaccion)
+  +findProgreso(estudianteId, cursoId)
+  +saveIndicador(indicador)
+}
+
+class LmsClientPort <<Output Port>> {
+  +obtenerInteracciones()
+  +obtenerCalificaciones()
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class TrazabilidadPostgresAdapter <<Outbound Adapter>> {
+  +saveInteraccion(interaccion)
+  +findProgreso(estudianteId, cursoId)
+}
+
+class IntegracionLmsRestAdapter <<Outbound Adapter>> {
+  +obtenerInteracciones()
+  +obtenerCalificaciones()
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class InteraccionRegistradaEvent <<Domain Event>> {
+  +UUID interaccionId
+  +UUID estudianteId
+  +UUID cursoId
+  +DateTime occurredAt
+}
+
+TrazabilidadController --> RegistrarInteraccionUseCase
+TrazabilidadController --> ConsultarProgresoUseCase
+TrazabilidadController --> CalcularIndicadoresUseCase
+InteraccionEventConsumer --> RegistrarInteraccionUseCase
+RegistrarInteraccionUseCase --> InteraccionAcademica
+RegistrarInteraccionUseCase --> RespuestaActividad
+ConsultarProgresoUseCase --> ProgresoAcademico
+CalcularIndicadoresUseCase --> IndicadorTrazabilidad
+ProgresoAcademico "1" --> "0..*" IndicadorTrazabilidad
+InteraccionAcademica "1" --> "0..*" RespuestaActividad
+RegistrarInteraccionUseCase --> TrazabilidadRepositoryPort
+RegistrarInteraccionUseCase --> EventPublisherPort
+ConsultarProgresoUseCase --> TrazabilidadRepositoryPort
+ConsultarProgresoUseCase --> LmsClientPort
+CalcularIndicadoresUseCase --> TrazabilidadRepositoryPort
+TrazabilidadPostgresAdapter ..|> TrazabilidadRepositoryPort
+IntegracionLmsRestAdapter ..|> LmsClientPort
+EventBridgeAdapter ..|> EventPublisherPort
+RegistrarInteraccionUseCase ..> InteraccionRegistradaEvent : crea
+EventPublisherPort ..> InteraccionRegistradaEvent : publica
+@enduml
+
+@startuml Microservicio_de_Recomendacion
+title Microservicio de Recomendación
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class RecomendacionController <<Inbound Adapter>> {
+  +generarRecomendacion()
+  +consultarRecomendaciones()
+}
+
+class RecomendacionEventConsumer <<Inbound Adapter>> {
+  +procesarInteraccionRegistrada()
+}
+
+class GenerarRecomendacionUseCase <<Use Case>> {
+  +execute(estudianteId, cursoId)
+}
+
+class ObtenerEstadoConocimientoUseCase <<Use Case>> {
+  +execute(secuencia)
+}
+
+class ConsultarRecomendacionUseCase <<Use Case>> {
+  +execute(estudianteId)
+}
+
+class SecuenciaInteraccion <<Domain>> {
+  +UUID estudianteId
+  +UUID cursoId
+  +String vectorConceptos
+  +String vectorRespuestas
+}
+
+class ModeloSAKT <<Domain Service>> {
+  +String version
+  +predecirDominio(secuencia)
+}
+
+class PrediccionKT <<Domain>> {
+  +Float probabilidadDominio
+  +Float confianza
+  +DateTime fechaPrediccion
+}
+
+class Recomendacion <<Domain>> {
+  +UUID id
+  +UUID estudianteId
+  +UUID cursoId
+  +EstadoRecomendacion estado
+}
+
+class ItemRecomendado <<Domain>> {
+  +UUID recursoId
+  +Float score
+  +Integer orden
+  +String motivo
+}
+
+class RecomendacionRepositoryPort <<Output Port>> {
+  +save(recomendacion)
+  +findByEstudiante(estudianteId)
+}
+
+class TrazabilidadClientPort <<Output Port>> {
+  +obtenerInteracciones(estudianteId, cursoId)
+}
+
+class CursosClientPort <<Output Port>> {
+  +obtenerRecursosCandidatos(cursoId)
+}
+
+class XaiClientPort <<Output Port>> {
+  +generarExplicacion(recomendacion)
+}
+
+class StoragePort <<Output Port>> {
+  +getRecursoUrl(recursoId)
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class RecomendacionPostgresAdapter <<Outbound Adapter>> {
+  +save(recomendacion)
+  +findByEstudiante(estudianteId)
+}
+
+class TrazabilidadRestAdapter <<Outbound Adapter>> {
+  +obtenerInteracciones(estudianteId, cursoId)
+}
+
+class CursosRestAdapter <<Outbound Adapter>> {
+  +obtenerRecursosCandidatos(cursoId)
+}
+
+class XaiRestAdapter <<Outbound Adapter>> {
+  +generarExplicacion(recomendacion)
+}
+
+class S3Adapter <<Outbound Adapter>> {
+  +getRecursoUrl(recursoId)
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class RecomendacionGeneradaEvent <<Domain Event>> {
+  +UUID recomendacionId
+  +UUID estudianteId
+  +UUID cursoId
+  +DateTime occurredAt
+}
+
+RecomendacionController --> GenerarRecomendacionUseCase
+RecomendacionController --> ConsultarRecomendacionUseCase
+RecomendacionEventConsumer --> GenerarRecomendacionUseCase
+GenerarRecomendacionUseCase --> ObtenerEstadoConocimientoUseCase
+ObtenerEstadoConocimientoUseCase --> ModeloSAKT
+ObtenerEstadoConocimientoUseCase --> SecuenciaInteraccion
+ModeloSAKT --> PrediccionKT
+GenerarRecomendacionUseCase --> Recomendacion
+GenerarRecomendacionUseCase --> ItemRecomendado
+Recomendacion "1" --> "1..*" ItemRecomendado
+GenerarRecomendacionUseCase --> TrazabilidadClientPort
+GenerarRecomendacionUseCase --> CursosClientPort
+GenerarRecomendacionUseCase --> XaiClientPort
+GenerarRecomendacionUseCase --> StoragePort
+GenerarRecomendacionUseCase --> RecomendacionRepositoryPort
+GenerarRecomendacionUseCase --> EventPublisherPort
+ConsultarRecomendacionUseCase --> RecomendacionRepositoryPort
+RecomendacionPostgresAdapter ..|> RecomendacionRepositoryPort
+TrazabilidadRestAdapter ..|> TrazabilidadClientPort
+CursosRestAdapter ..|> CursosClientPort
+XaiRestAdapter ..|> XaiClientPort
+S3Adapter ..|> StoragePort
+EventBridgeAdapter ..|> EventPublisherPort
+GenerarRecomendacionUseCase ..> RecomendacionGeneradaEvent : crea
+EventPublisherPort ..> RecomendacionGeneradaEvent : publica
+@enduml
+
+@startuml Microservicio_XAI
+title Microservicio XAI
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class XaiController <<Inbound Adapter>> {
+  +generarExplicacion()
+  +consultarExplicacion()
+}
+
+class XaiEventConsumer <<Inbound Adapter>> {
+  +procesarRecomendacionGenerada()
+}
+
+class GenerarExplicacionUseCase <<Use Case>> {
+  +execute(recomendacion)
+}
+
+class ConsultarExplicacionUseCase <<Use Case>> {
+  +execute(recomendacionId)
+}
+
+class Explicacion <<Domain>> {
+  +UUID id
+  +UUID recomendacionId
+  +String resumen
+  +String detalle
+  +DateTime fechaGeneracion
+}
+
+class PesoAtencion <<Domain>> {
+  +UUID interaccionReferenciaId
+  +Float peso
+  +String concepto
+}
+
+class EvidenciaExplicativa <<Domain>> {
+  +String tipo
+  +String descripcion
+  +Float impacto
+}
+
+class VisualizacionXAI <<Domain>> {
+  +TipoVisualizacion tipo
+  +String configuracionJson
+}
+
+class MotorExplicabilidad <<Domain Service>> {
+  +generarTexto()
+  +generarEvidencias()
+}
+
+class XaiRepositoryPort <<Output Port>> {
+  +save(explicacion)
+  +findByRecomendacion(recomendacionId)
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class XaiPostgresAdapter <<Outbound Adapter>> {
+  +save(explicacion)
+  +findByRecomendacion(recomendacionId)
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class ExplicacionGeneradaEvent <<Domain Event>> {
+  +UUID explicacionId
+  +UUID recomendacionId
+  +DateTime occurredAt
+}
+
+XaiController --> GenerarExplicacionUseCase
+XaiController --> ConsultarExplicacionUseCase
+XaiEventConsumer --> GenerarExplicacionUseCase
+GenerarExplicacionUseCase --> Explicacion
+GenerarExplicacionUseCase --> PesoAtencion
+GenerarExplicacionUseCase --> EvidenciaExplicativa
+GenerarExplicacionUseCase --> VisualizacionXAI
+GenerarExplicacionUseCase --> MotorExplicabilidad
+Explicacion "1" --> "0..*" PesoAtencion
+Explicacion "1" --> "0..*" EvidenciaExplicativa
+Explicacion "1" --> "0..*" VisualizacionXAI
+GenerarExplicacionUseCase --> XaiRepositoryPort
+GenerarExplicacionUseCase --> EventPublisherPort
+ConsultarExplicacionUseCase --> XaiRepositoryPort
+XaiPostgresAdapter ..|> XaiRepositoryPort
+EventBridgeAdapter ..|> EventPublisherPort
+GenerarExplicacionUseCase ..> ExplicacionGeneradaEvent : crea
+EventPublisherPort ..> ExplicacionGeneradaEvent : publica
+@enduml
+
+@startuml Procesamiento_asincrono_con_Lambda_EventBridge_y_SQS
+title Procesamiento asíncrono con Lambda, EventBridge y SQS
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class DomainEvent <<abstract>> {
+  +UUID eventId
+  +String eventType
+  +DateTime occurredAt
+  +String source
+}
+
+class EventEnvelope {
+  +UUID id
+  +String correlationId
+  +String payloadJson
+  +Integer retryCount
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class SqsAdapter <<Outbound Adapter>> {
+  +sendMessage(envelope)
+  +receiveMessage()
+}
+
+class LambdaMoodleHandler <<AWS Lambda>> {
+  +handleSchedule()
+}
+
+class LambdaInteraccionesHandler <<AWS Lambda>> {
+  +handleSqsMessage()
+}
+
+class LambdaAlertasHandler <<AWS Lambda>> {
+  +handleEvent()
+}
+
+class LambdaRecursosHandler <<AWS Lambda>> {
+  +handleS3Event()
+}
+
+class MoodleApiPort <<Output Port>> {
+  +getCourses()
+  +getActivities()
+  +getGrades()
+  +getEvents()
+}
+
+class TrazabilidadRepositoryPort <<Output Port>> {
+  +saveInteraccion()
+  +findProgreso()
+}
+
+class XaiRepositoryPort <<Output Port>> {
+  +saveAlertaExplicable()
+}
+
+class RecursoRepositoryPort <<Output Port>> {
+  +actualizarMetadata()
+}
+
+DomainEvent --> EventEnvelope : se_envuelve
+EventBridgeAdapter --> EventEnvelope : publica
+EventEnvelope --> SqsAdapter : se_enruta
+SqsAdapter --> LambdaInteraccionesHandler : dispara
+LambdaMoodleHandler --> MoodleApiPort : extrae datos LMS
+LambdaInteraccionesHandler --> TrazabilidadRepositoryPort : actualiza interacciones
+LambdaAlertasHandler --> TrazabilidadRepositoryPort : consulta progreso
+LambdaAlertasHandler --> XaiRepositoryPort : registra alerta explicable
+LambdaRecursosHandler --> RecursoRepositoryPort : actualiza metadatos
+@enduml

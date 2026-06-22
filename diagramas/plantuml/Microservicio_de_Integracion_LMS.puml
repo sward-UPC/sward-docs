@@ -1,0 +1,130 @@
+@startuml Microservicio_de_Integracion_LMS
+title Microservicio de Integración LMS
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class LmsController <<Inbound Adapter>> {
+  +consultarCursos()
+  +consultarActividades()
+  +consultarCalificaciones()
+  +consultarInteracciones()
+}
+
+class MoodleSyncLambdaHandler <<Inbound Adapter>> {
+  +handleSchedule()
+}
+
+class ConsultarCursosLmsUseCase <<Use Case>> {
+  +execute()
+}
+
+class ConsultarActividadesLmsUseCase <<Use Case>> {
+  +execute()
+}
+
+class ConsultarCalificacionesLmsUseCase <<Use Case>> {
+  +execute()
+}
+
+class SincronizarMoodleUseCase <<Use Case>> {
+  +execute()
+}
+
+class CursoLMS <<Domain>> {
+  +UUID id
+  +String moodleCourseId
+  +String nombre
+  +String codigo
+}
+
+class ActividadLMS <<Domain>> {
+  +UUID id
+  +String moodleActivityId
+  +String moodleCourseId
+  +String tipo
+}
+
+class CalificacionLMS <<Domain>> {
+  +UUID id
+  +String moodleUserId
+  +String moodleActivityId
+  +Float puntaje
+}
+
+class InteraccionLMS <<Domain>> {
+  +UUID id
+  +String moodleEventId
+  +String moodleUserId
+  +String accion
+  +DateTime fechaEvento
+}
+
+class LmsRepositoryPort <<Output Port>> {
+  +saveCursos(cursos)
+  +findCursos()
+  +findInteracciones(filtros)
+}
+
+class MoodleApiPort <<Output Port>> {
+  +getCourses()
+  +getActivities()
+  +getGrades()
+  +getEvents()
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class LmsPostgresAdapter <<Outbound Adapter>> {
+  +saveCursos(cursos)
+  +findCursos()
+  +findInteracciones(filtros)
+}
+
+class MoodleApiAdapter <<Outbound Adapter>> {
+  +getCourses()
+  +getActivities()
+  +getGrades()
+  +getEvents()
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class DatosLmsSincronizadosEvent <<Domain Event>> {
+  +UUID sincronizacionId
+  +Integer registrosProcesados
+  +DateTime occurredAt
+}
+
+LmsController --> ConsultarCursosLmsUseCase
+LmsController --> ConsultarActividadesLmsUseCase
+LmsController --> ConsultarCalificacionesLmsUseCase
+MoodleSyncLambdaHandler --> SincronizarMoodleUseCase
+ConsultarCursosLmsUseCase --> CursoLMS
+ConsultarActividadesLmsUseCase --> ActividadLMS
+ConsultarCalificacionesLmsUseCase --> CalificacionLMS
+SincronizarMoodleUseCase --> CursoLMS
+SincronizarMoodleUseCase --> ActividadLMS
+SincronizarMoodleUseCase --> CalificacionLMS
+SincronizarMoodleUseCase --> InteraccionLMS
+ConsultarCursosLmsUseCase --> LmsRepositoryPort
+ConsultarActividadesLmsUseCase --> LmsRepositoryPort
+ConsultarCalificacionesLmsUseCase --> LmsRepositoryPort
+SincronizarMoodleUseCase --> MoodleApiPort
+SincronizarMoodleUseCase --> LmsRepositoryPort
+SincronizarMoodleUseCase --> EventPublisherPort
+LmsPostgresAdapter ..|> LmsRepositoryPort
+MoodleApiAdapter ..|> MoodleApiPort
+EventBridgeAdapter ..|> EventPublisherPort
+SincronizarMoodleUseCase ..> DatosLmsSincronizadosEvent : crea
+EventPublisherPort ..> DatosLmsSincronizadosEvent : publica
+@enduml

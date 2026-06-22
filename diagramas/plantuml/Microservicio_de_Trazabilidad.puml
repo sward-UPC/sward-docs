@@ -1,0 +1,121 @@
+@startuml Microservicio_de_Trazabilidad
+title Microservicio de Trazabilidad
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class TrazabilidadController <<Inbound Adapter>> {
+  +registrarInteraccion()
+  +consultarProgreso()
+  +calcularIndicadores()
+}
+
+class InteraccionEventConsumer <<Inbound Adapter>> {
+  +procesarEventoInteraccion()
+}
+
+class RegistrarInteraccionUseCase <<Use Case>> {
+  +execute(interaccion)
+}
+
+class ConsultarProgresoUseCase <<Use Case>> {
+  +execute(estudianteId, cursoId)
+}
+
+class CalcularIndicadoresUseCase <<Use Case>> {
+  +execute(estudianteId, cursoId)
+}
+
+class ProgresoAcademico <<Domain>> {
+  +UUID estudianteId
+  +UUID cursoId
+  +Float porcentajeAvance
+  +NivelRiesgo nivelRiesgo
+  +actualizar()
+}
+
+class InteraccionAcademica <<Domain>> {
+  +UUID id
+  +UUID estudianteId
+  +UUID cursoId
+  +UUID actividadId
+  +TipoInteraccion tipo
+  +DateTime fecha
+}
+
+class RespuestaActividad <<Domain>> {
+  +UUID id
+  +String preguntaId
+  +String respuesta
+  +Boolean correcta
+  +Float puntaje
+}
+
+class IndicadorTrazabilidad <<Domain>> {
+  +String nombre
+  +Float valor
+  +String unidad
+}
+
+class TrazabilidadRepositoryPort <<Output Port>> {
+  +saveInteraccion(interaccion)
+  +findProgreso(estudianteId, cursoId)
+  +saveIndicador(indicador)
+}
+
+class LmsClientPort <<Output Port>> {
+  +obtenerInteracciones()
+  +obtenerCalificaciones()
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class TrazabilidadPostgresAdapter <<Outbound Adapter>> {
+  +saveInteraccion(interaccion)
+  +findProgreso(estudianteId, cursoId)
+}
+
+class IntegracionLmsRestAdapter <<Outbound Adapter>> {
+  +obtenerInteracciones()
+  +obtenerCalificaciones()
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class InteraccionRegistradaEvent <<Domain Event>> {
+  +UUID interaccionId
+  +UUID estudianteId
+  +UUID cursoId
+  +DateTime occurredAt
+}
+
+TrazabilidadController --> RegistrarInteraccionUseCase
+TrazabilidadController --> ConsultarProgresoUseCase
+TrazabilidadController --> CalcularIndicadoresUseCase
+InteraccionEventConsumer --> RegistrarInteraccionUseCase
+RegistrarInteraccionUseCase --> InteraccionAcademica
+RegistrarInteraccionUseCase --> RespuestaActividad
+ConsultarProgresoUseCase --> ProgresoAcademico
+CalcularIndicadoresUseCase --> IndicadorTrazabilidad
+ProgresoAcademico "1" --> "0..*" IndicadorTrazabilidad
+InteraccionAcademica "1" --> "0..*" RespuestaActividad
+RegistrarInteraccionUseCase --> TrazabilidadRepositoryPort
+RegistrarInteraccionUseCase --> EventPublisherPort
+ConsultarProgresoUseCase --> TrazabilidadRepositoryPort
+ConsultarProgresoUseCase --> LmsClientPort
+CalcularIndicadoresUseCase --> TrazabilidadRepositoryPort
+TrazabilidadPostgresAdapter ..|> TrazabilidadRepositoryPort
+IntegracionLmsRestAdapter ..|> LmsClientPort
+EventBridgeAdapter ..|> EventPublisherPort
+RegistrarInteraccionUseCase ..> InteraccionRegistradaEvent : crea
+EventPublisherPort ..> InteraccionRegistradaEvent : publica
+@enduml

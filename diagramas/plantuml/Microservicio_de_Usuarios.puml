@@ -1,0 +1,129 @@
+@startuml Microservicio_de_Usuarios
+title Microservicio de Usuarios
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class UsuariosController <<Inbound Adapter>> {
+  +registrar()
+  +login()
+  +cerrarSesion()
+  +recuperarPassword()
+  +gestionarRoles()
+}
+
+class AutenticarUsuarioUseCase <<Use Case>> {
+  +execute(correo, password)
+}
+
+class RegistrarUsuarioUseCase <<Use Case>> {
+  +execute(datosRegistro)
+}
+
+class GestionarRolesUseCase <<Use Case>> {
+  +asignarRol(usuarioId, rolId)
+  +revocarRol(usuarioId, rolId)
+}
+
+class Usuario <<Domain>> {
+  +UUID id
+  +String correoInstitucional
+  +String passwordHash
+  +EstadoUsuario estado
+  +validarCorreo()
+  +activar()
+  +bloquear()
+}
+
+class Rol <<Domain>> {
+  +UUID id
+  +String nombre
+  +String descripcion
+}
+
+class Permiso <<Domain>> {
+  +UUID id
+  +String codigo
+  +String descripcion
+}
+
+class Sesion <<Domain>> {
+  +UUID id
+  +UUID usuarioId
+  +String jwtId
+  +DateTime expiraEn
+  +invalidar()
+}
+
+class UsuarioRepositoryPort <<Output Port>> {
+  +findByCorreo(correo)
+  +findById(id)
+  +save(usuario)
+}
+
+class RolRepositoryPort <<Output Port>> {
+  +findByNombre(nombre)
+  +save(rol)
+}
+
+class TokenPort <<Output Port>> {
+  +generar(usuario)
+  +validar(token)
+  +invalidar(token)
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class UsuarioPostgresAdapter <<Outbound Adapter>> {
+  +findByCorreo(correo)
+  +save(usuario)
+}
+
+class RolPostgresAdapter <<Outbound Adapter>> {
+  +findByNombre(nombre)
+  +save(rol)
+}
+
+class JwtAdapter <<Outbound Adapter>> {
+  +generar(usuario)
+  +validar(token)
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class UsuarioAutenticadoEvent <<Domain Event>> {
+  +UUID usuarioId
+  +String rol
+  +DateTime occurredAt
+}
+
+UsuariosController --> AutenticarUsuarioUseCase
+UsuariosController --> RegistrarUsuarioUseCase
+UsuariosController --> GestionarRolesUseCase
+AutenticarUsuarioUseCase --> Usuario
+AutenticarUsuarioUseCase --> Sesion
+RegistrarUsuarioUseCase --> Usuario
+GestionarRolesUseCase --> Usuario
+GestionarRolesUseCase --> Rol
+Rol --> Permiso
+AutenticarUsuarioUseCase --> UsuarioRepositoryPort
+AutenticarUsuarioUseCase --> TokenPort
+AutenticarUsuarioUseCase --> EventPublisherPort
+RegistrarUsuarioUseCase --> UsuarioRepositoryPort
+GestionarRolesUseCase --> RolRepositoryPort
+UsuarioPostgresAdapter ..|> UsuarioRepositoryPort
+RolPostgresAdapter ..|> RolRepositoryPort
+JwtAdapter ..|> TokenPort
+EventBridgeAdapter ..|> EventPublisherPort
+AutenticarUsuarioUseCase ..> UsuarioAutenticadoEvent : crea
+EventPublisherPort ..> UsuarioAutenticadoEvent : publica
+@enduml

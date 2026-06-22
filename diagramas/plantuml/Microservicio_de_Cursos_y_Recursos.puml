@@ -1,0 +1,152 @@
+@startuml Microservicio_de_Cursos_y_Recursos
+title Microservicio de Cursos y Recursos
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class CursosController <<Inbound Adapter>> {
+  +consultarCursos()
+  +consultarActividades()
+  +registrarRecurso()
+  +buscarRecursosCandidatos()
+}
+
+class S3EventConsumer <<Inbound Adapter>> {
+  +procesarArchivoSubido()
+}
+
+class GestionarCursoUseCase <<Use Case>> {
+  +execute(curso)
+}
+
+class GestionarActividadUseCase <<Use Case>> {
+  +execute(actividad)
+}
+
+class GestionarRecursoUseCase <<Use Case>> {
+  +execute(recurso)
+}
+
+class BuscarRecursosCandidatosUseCase <<Use Case>> {
+  +execute(criterios)
+}
+
+class Curso <<Domain>> {
+  +UUID id
+  +String codigo
+  +String nombre
+  +EstadoCurso estado
+}
+
+class Actividad <<Domain>> {
+  +UUID id
+  +UUID cursoId
+  +String titulo
+  +TipoActividad tipo
+  +Float puntajeMaximo
+}
+
+class RecursoEducativo <<Domain>> {
+  +UUID id
+  +UUID cursoId
+  +String titulo
+  +TipoRecurso tipo
+  +String nivelDificultad
+  +Boolean activo
+}
+
+class MetadataRecurso <<Domain>> {
+  +UUID recursoId
+  +String etiquetas
+  +String competencia
+  +Integer tiempoEstimado
+}
+
+class CursoRepositoryPort <<Output Port>> {
+  +findById(id)
+  +save(curso)
+}
+
+class RecursoRepositoryPort <<Output Port>> {
+  +findCandidatos(criterios)
+  +save(recurso)
+}
+
+class StoragePort <<Output Port>> {
+  +upload(file)
+  +getUrl(s3Key)
+}
+
+class LmsClientPort <<Output Port>> {
+  +obtenerCursos()
+  +obtenerActividades()
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class CursoPostgresAdapter <<Outbound Adapter>> {
+  +findById(id)
+  +save(curso)
+}
+
+class RecursoPostgresAdapter <<Outbound Adapter>> {
+  +findCandidatos(criterios)
+  +save(recurso)
+}
+
+class S3Adapter <<Outbound Adapter>> {
+  +upload(file)
+  +getUrl(s3Key)
+}
+
+class IntegracionLmsRestAdapter <<Outbound Adapter>> {
+  +obtenerCursos()
+  +obtenerActividades()
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class RecursoActualizadoEvent <<Domain Event>> {
+  +UUID recursoId
+  +UUID cursoId
+  +DateTime occurredAt
+}
+
+CursosController --> GestionarCursoUseCase
+CursosController --> GestionarActividadUseCase
+CursosController --> GestionarRecursoUseCase
+CursosController --> BuscarRecursosCandidatosUseCase
+S3EventConsumer --> GestionarRecursoUseCase
+GestionarCursoUseCase --> Curso
+GestionarActividadUseCase --> Actividad
+GestionarRecursoUseCase --> RecursoEducativo
+GestionarRecursoUseCase --> MetadataRecurso
+BuscarRecursosCandidatosUseCase --> RecursoEducativo
+Curso "1" --> "0..*" Actividad
+Curso "1" --> "0..*" RecursoEducativo
+RecursoEducativo "1" --> "1" MetadataRecurso
+GestionarCursoUseCase --> CursoRepositoryPort
+GestionarActividadUseCase --> CursoRepositoryPort
+GestionarRecursoUseCase --> RecursoRepositoryPort
+GestionarRecursoUseCase --> StoragePort
+GestionarCursoUseCase --> LmsClientPort
+GestionarActividadUseCase --> LmsClientPort
+GestionarRecursoUseCase --> EventPublisherPort
+BuscarRecursosCandidatosUseCase --> RecursoRepositoryPort
+CursoPostgresAdapter ..|> CursoRepositoryPort
+RecursoPostgresAdapter ..|> RecursoRepositoryPort
+S3Adapter ..|> StoragePort
+IntegracionLmsRestAdapter ..|> LmsClientPort
+EventBridgeAdapter ..|> EventPublisherPort
+GestionarRecursoUseCase ..> RecursoActualizadoEvent : crea
+EventPublisherPort ..> RecursoActualizadoEvent : publica
+@enduml

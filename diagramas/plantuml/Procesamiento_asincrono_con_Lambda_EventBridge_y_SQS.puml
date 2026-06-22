@@ -1,0 +1,80 @@
+@startuml Procesamiento_asincrono_con_Lambda_EventBridge_y_SQS
+title Procesamiento asíncrono con Lambda, EventBridge y SQS
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class DomainEvent <<abstract>> {
+  +UUID eventId
+  +String eventType
+  +DateTime occurredAt
+  +String source
+}
+
+class EventEnvelope {
+  +UUID id
+  +String correlationId
+  +String payloadJson
+  +Integer retryCount
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class SqsAdapter <<Outbound Adapter>> {
+  +sendMessage(envelope)
+  +receiveMessage()
+}
+
+class LambdaMoodleHandler <<AWS Lambda>> {
+  +handleSchedule()
+}
+
+class LambdaInteraccionesHandler <<AWS Lambda>> {
+  +handleSqsMessage()
+}
+
+class LambdaAlertasHandler <<AWS Lambda>> {
+  +handleEvent()
+}
+
+class LambdaRecursosHandler <<AWS Lambda>> {
+  +handleS3Event()
+}
+
+class MoodleApiPort <<Output Port>> {
+  +getCourses()
+  +getActivities()
+  +getGrades()
+  +getEvents()
+}
+
+class TrazabilidadRepositoryPort <<Output Port>> {
+  +saveInteraccion()
+  +findProgreso()
+}
+
+class XaiRepositoryPort <<Output Port>> {
+  +saveAlertaExplicable()
+}
+
+class RecursoRepositoryPort <<Output Port>> {
+  +actualizarMetadata()
+}
+
+DomainEvent --> EventEnvelope : se_envuelve
+EventBridgeAdapter --> EventEnvelope : publica
+EventEnvelope --> SqsAdapter : se_enruta
+SqsAdapter --> LambdaInteraccionesHandler : dispara
+LambdaMoodleHandler --> MoodleApiPort : extrae datos LMS
+LambdaInteraccionesHandler --> TrazabilidadRepositoryPort : actualiza interacciones
+LambdaAlertasHandler --> TrazabilidadRepositoryPort : consulta progreso
+LambdaAlertasHandler --> XaiRepositoryPort : registra alerta explicable
+LambdaRecursosHandler --> RecursoRepositoryPort : actualiza metadatos
+@enduml

@@ -1,0 +1,101 @@
+@startuml Microservicio_XAI
+title Microservicio XAI
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class XaiController <<Inbound Adapter>> {
+  +generarExplicacion()
+  +consultarExplicacion()
+}
+
+class XaiEventConsumer <<Inbound Adapter>> {
+  +procesarRecomendacionGenerada()
+}
+
+class GenerarExplicacionUseCase <<Use Case>> {
+  +execute(recomendacion)
+}
+
+class ConsultarExplicacionUseCase <<Use Case>> {
+  +execute(recomendacionId)
+}
+
+class Explicacion <<Domain>> {
+  +UUID id
+  +UUID recomendacionId
+  +String resumen
+  +String detalle
+  +DateTime fechaGeneracion
+}
+
+class PesoAtencion <<Domain>> {
+  +UUID interaccionReferenciaId
+  +Float peso
+  +String concepto
+}
+
+class EvidenciaExplicativa <<Domain>> {
+  +String tipo
+  +String descripcion
+  +Float impacto
+}
+
+class VisualizacionXAI <<Domain>> {
+  +TipoVisualizacion tipo
+  +String configuracionJson
+}
+
+class MotorExplicabilidad <<Domain Service>> {
+  +generarTexto()
+  +generarEvidencias()
+}
+
+class XaiRepositoryPort <<Output Port>> {
+  +save(explicacion)
+  +findByRecomendacion(recomendacionId)
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class XaiPostgresAdapter <<Outbound Adapter>> {
+  +save(explicacion)
+  +findByRecomendacion(recomendacionId)
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class ExplicacionGeneradaEvent <<Domain Event>> {
+  +UUID explicacionId
+  +UUID recomendacionId
+  +DateTime occurredAt
+}
+
+XaiController --> GenerarExplicacionUseCase
+XaiController --> ConsultarExplicacionUseCase
+XaiEventConsumer --> GenerarExplicacionUseCase
+GenerarExplicacionUseCase --> Explicacion
+GenerarExplicacionUseCase --> PesoAtencion
+GenerarExplicacionUseCase --> EvidenciaExplicativa
+GenerarExplicacionUseCase --> VisualizacionXAI
+GenerarExplicacionUseCase --> MotorExplicabilidad
+Explicacion "1" --> "0..*" PesoAtencion
+Explicacion "1" --> "0..*" EvidenciaExplicativa
+Explicacion "1" --> "0..*" VisualizacionXAI
+GenerarExplicacionUseCase --> XaiRepositoryPort
+GenerarExplicacionUseCase --> EventPublisherPort
+ConsultarExplicacionUseCase --> XaiRepositoryPort
+XaiPostgresAdapter ..|> XaiRepositoryPort
+EventBridgeAdapter ..|> EventPublisherPort
+GenerarExplicacionUseCase ..> ExplicacionGeneradaEvent : crea
+EventPublisherPort ..> ExplicacionGeneradaEvent : publica
+@enduml

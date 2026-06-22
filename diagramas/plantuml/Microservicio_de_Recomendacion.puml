@@ -1,0 +1,147 @@
+@startuml Microservicio_de_Recomendacion
+title Microservicio de Recomendación
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class RecomendacionController <<Inbound Adapter>> {
+  +generarRecomendacion()
+  +consultarRecomendaciones()
+}
+
+class RecomendacionEventConsumer <<Inbound Adapter>> {
+  +procesarInteraccionRegistrada()
+}
+
+class GenerarRecomendacionUseCase <<Use Case>> {
+  +execute(estudianteId, cursoId)
+}
+
+class ObtenerEstadoConocimientoUseCase <<Use Case>> {
+  +execute(secuencia)
+}
+
+class ConsultarRecomendacionUseCase <<Use Case>> {
+  +execute(estudianteId)
+}
+
+class SecuenciaInteraccion <<Domain>> {
+  +UUID estudianteId
+  +UUID cursoId
+  +String vectorConceptos
+  +String vectorRespuestas
+}
+
+class ModeloSAKT <<Domain Service>> {
+  +String version
+  +predecirDominio(secuencia)
+}
+
+class PrediccionKT <<Domain>> {
+  +Float probabilidadDominio
+  +Float confianza
+  +DateTime fechaPrediccion
+}
+
+class Recomendacion <<Domain>> {
+  +UUID id
+  +UUID estudianteId
+  +UUID cursoId
+  +EstadoRecomendacion estado
+}
+
+class ItemRecomendado <<Domain>> {
+  +UUID recursoId
+  +Float score
+  +Integer orden
+  +String motivo
+}
+
+class RecomendacionRepositoryPort <<Output Port>> {
+  +save(recomendacion)
+  +findByEstudiante(estudianteId)
+}
+
+class TrazabilidadClientPort <<Output Port>> {
+  +obtenerInteracciones(estudianteId, cursoId)
+}
+
+class CursosClientPort <<Output Port>> {
+  +obtenerRecursosCandidatos(cursoId)
+}
+
+class XaiClientPort <<Output Port>> {
+  +generarExplicacion(recomendacion)
+}
+
+class StoragePort <<Output Port>> {
+  +getRecursoUrl(recursoId)
+}
+
+class EventPublisherPort <<Output Port>> {
+  +publish(event)
+}
+
+class RecomendacionPostgresAdapter <<Outbound Adapter>> {
+  +save(recomendacion)
+  +findByEstudiante(estudianteId)
+}
+
+class TrazabilidadRestAdapter <<Outbound Adapter>> {
+  +obtenerInteracciones(estudianteId, cursoId)
+}
+
+class CursosRestAdapter <<Outbound Adapter>> {
+  +obtenerRecursosCandidatos(cursoId)
+}
+
+class XaiRestAdapter <<Outbound Adapter>> {
+  +generarExplicacion(recomendacion)
+}
+
+class S3Adapter <<Outbound Adapter>> {
+  +getRecursoUrl(recursoId)
+}
+
+class EventBridgeAdapter <<Outbound Adapter>> {
+  +publish(event)
+}
+
+class RecomendacionGeneradaEvent <<Domain Event>> {
+  +UUID recomendacionId
+  +UUID estudianteId
+  +UUID cursoId
+  +DateTime occurredAt
+}
+
+RecomendacionController --> GenerarRecomendacionUseCase
+RecomendacionController --> ConsultarRecomendacionUseCase
+RecomendacionEventConsumer --> GenerarRecomendacionUseCase
+GenerarRecomendacionUseCase --> ObtenerEstadoConocimientoUseCase
+ObtenerEstadoConocimientoUseCase --> ModeloSAKT
+ObtenerEstadoConocimientoUseCase --> SecuenciaInteraccion
+ModeloSAKT --> PrediccionKT
+GenerarRecomendacionUseCase --> Recomendacion
+GenerarRecomendacionUseCase --> ItemRecomendado
+Recomendacion "1" --> "1..*" ItemRecomendado
+GenerarRecomendacionUseCase --> TrazabilidadClientPort
+GenerarRecomendacionUseCase --> CursosClientPort
+GenerarRecomendacionUseCase --> XaiClientPort
+GenerarRecomendacionUseCase --> StoragePort
+GenerarRecomendacionUseCase --> RecomendacionRepositoryPort
+GenerarRecomendacionUseCase --> EventPublisherPort
+ConsultarRecomendacionUseCase --> RecomendacionRepositoryPort
+RecomendacionPostgresAdapter ..|> RecomendacionRepositoryPort
+TrazabilidadRestAdapter ..|> TrazabilidadClientPort
+CursosRestAdapter ..|> CursosClientPort
+XaiRestAdapter ..|> XaiClientPort
+S3Adapter ..|> StoragePort
+EventBridgeAdapter ..|> EventPublisherPort
+GenerarRecomendacionUseCase ..> RecomendacionGeneradaEvent : crea
+EventPublisherPort ..> RecomendacionGeneradaEvent : publica
+@enduml

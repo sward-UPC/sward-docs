@@ -1,0 +1,84 @@
+@startuml Vista_general_hexagonal_por_microservicio
+title Vista general hexagonal por microservicio
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #F9F8F5
+  BorderColor #01696F
+  ArrowColor #707070
+}
+
+class Frontend <<Cliente>> {
+  React.js
+}
+
+class APIGateway <<Inbound Gateway>> {
+  Amazon API Gateway
+}
+
+class UsuariosMS <<Microservicio Hexagonal>> {
+  FastAPI
+  BD Usuarios
+}
+
+class CursosRecursosMS <<Microservicio Hexagonal>> {
+  FastAPI
+  BD Cursos y Recursos
+  S3
+}
+
+class TrazabilidadMS <<Microservicio Hexagonal>> {
+  FastAPI
+  BD Trazabilidad
+}
+
+class RecomendacionMS <<Microservicio Hexagonal>> {
+  Python / pyKT
+  BD Recomendación
+}
+
+class XaiMS <<Microservicio Hexagonal>> {
+  Python
+  BD XAI
+}
+
+class IntegracionLmsMS <<Microservicio Hexagonal>> {
+  FastAPI
+  BD Integración LMS
+}
+
+class EventBridge <<Event Bus>> {
+}
+
+class SQS <<Queue>> {
+}
+
+class Lambdas <<AWS Lambda>> {
+  Moodle
+  Interacciones
+  Alertas
+  Recursos
+}
+
+Frontend --> APIGateway : consume REST/HTTPS
+APIGateway --> UsuariosMS : enruta solicitudes
+APIGateway --> CursosRecursosMS : enruta solicitudes
+APIGateway --> TrazabilidadMS : enruta solicitudes
+APIGateway --> RecomendacionMS : enruta solicitudes
+APIGateway --> XaiMS : enruta solicitudes
+APIGateway --> IntegracionLmsMS : enruta solicitudes
+RecomendacionMS ..> TrazabilidadMS : consulta historial
+RecomendacionMS ..> CursosRecursosMS : consulta recursos
+RecomendacionMS ..> XaiMS : solicita explicación
+CursosRecursosMS ..> IntegracionLmsMS : consulta cursos LMS
+TrazabilidadMS ..> IntegracionLmsMS : consulta interacciones LMS
+UsuariosMS ..> EventBridge : publica eventos
+CursosRecursosMS ..> EventBridge : publica eventos
+TrazabilidadMS ..> EventBridge : publica eventos
+RecomendacionMS ..> EventBridge : publica eventos
+XaiMS ..> EventBridge : publica eventos
+IntegracionLmsMS ..> EventBridge : publica eventos
+EventBridge --> SQS : enruta eventos
+SQS --> Lambdas : activa procesamiento
+@enduml
