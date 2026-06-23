@@ -2,17 +2,31 @@
    SWARD · Documentación — estilos de marca y pulido visual
    ============================================================ */
 
-/* ---- Paleta de marca SWARD (indigo/violeta, igual que la app) ---- */
-:root {
-  --md-primary-fg-color: #4f46e5;
-  --md-primary-fg-color--light: #6366f1;
-  --md-primary-fg-color--dark: #4338ca;
-  --md-accent-fg-color: #7c3aed;
-  --md-typeset-a-color: #4f46e5;
+/* ---- Paleta de marca SWARD (violeta + cian) ----
+   Material aplica el color a nivel <body> con [data-md-color-primary]; por eso
+   un override en :root NO funciona. Hay que usar primary/accent: custom en
+   mkdocs.yml y definir aquí los selectores correctos. */
+[data-md-color-primary="custom"] {
+  --md-primary-fg-color: #6d28d9;        /* violeta — header y nav */
+  --md-primary-fg-color--light: #7c3aed;
+  --md-primary-fg-color--dark: #5b21b6;
+  --md-primary-bg-color: #ffffff;
+  --md-primary-bg-color--light: rgba(255, 255, 255, 0.7);
 }
+[data-md-color-accent="custom"] {
+  --md-accent-fg-color: #0891b2;         /* cian — links, hover, foco */
+  --md-accent-fg-color--transparent: rgba(8, 145, 178, 0.1);
+  --md-accent-bg-color: #ffffff;
+  --md-accent-bg-color--light: rgba(255, 255, 255, 0.7);
+}
+/* Color de los enlaces del cuerpo (independiente del accent del tema) */
+:root { --md-typeset-a-color: #6d28d9; }
 [data-md-color-scheme="slate"] {
-  --md-typeset-a-color: #a5b4fc;
-  --md-accent-fg-color: #a78bfa;
+  --md-typeset-a-color: #c4b5fd;         /* violeta claro, legible en oscuro */
+}
+/* En modo oscuro, el header usa un violeta un poco más profundo */
+[data-md-color-scheme="slate"][data-md-color-primary="custom"] {
+  --md-primary-fg-color: #5b21b6;
 }
 
 /* ---- Figuras / diagramas ----
