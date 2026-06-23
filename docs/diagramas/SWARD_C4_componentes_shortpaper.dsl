@@ -84,12 +84,11 @@ workspace "SWARD - Vista reducida de microservicios" "Modelo C4 condensado y com
             eventBus = container "EventBridge" "Bus de eventos de dominio (sward-event-bus)." "Amazon EventBridge" {
                 tags "Event Bus"
             }
-            relationalDb = container "Bases de Datos" "Una BD PostgreSQL por microservicio." "Amazon RDS" {
-                tags "Database"
-            }
-            storage = container "S3 (sward-models)" "Checkpoint del modelo SAKT y recursos." "Amazon S3" {
+            storage = container "S3 (sward-models)" "Checkpoint del modelo SAKT." "Amazon S3" {
                 tags "Storage"
             }
+            // Nota: cada microservicio tiene su propia BD PostgreSQL (RDS); se omiten
+            // en esta figura por compacidad (el foco es la topología y los flujos).
         }
 
         // ── Usuarios -> sistema ────────────────────────────────────────────
@@ -103,7 +102,6 @@ workspace "SWARD - Vista reducida de microservicios" "Modelo C4 condensado y com
         // ── Eje 1: INGESTA Moodle -> SWARD ─────────────────────────────────
         sistema.lambdaMoodleSync -> sistema.lmsService "Dispara ingesta (15 min)" "REST"
         sistema.lmsService -> moodle "Extrae cursos, notas e interacciones" "Moodle API"
-        sistema.lmsService -> sistema.relationalDb "Persiste datos LMS" "SQL"
         sistema.usuariosService -> sistema.lmsService "Valida identidad en Moodle (registro)" "REST"
 
         // ── Eje 2: KNOWLEDGE TRACING ───────────────────────────────────────
@@ -120,14 +118,6 @@ workspace "SWARD - Vista reducida de microservicios" "Modelo C4 condensado y com
         sistema.eventBus -> sistema.lambdaAlertas "Enruta riesgo/recomendacion" "Rule"
         sistema.eventBus -> sistema.lambdaNotificaciones "Enruta feedback/logros/alertas/registro" "Rule"
         sistema.lambdaAlertas -> sistema.eventBus "AlertaCreada" "EventBridge"
-
-        // ── Persistencia central (resto agrupado por compacidad) ───────────
-        sistema.usuariosService -> sistema.relationalDb "Usuarios, roles, notis" "SQL"
-        sistema.trazabilidadService -> sistema.relationalDb "Interacciones y progreso" "SQL"
-        sistema.recomendacionService -> sistema.relationalDb "Recomendaciones" "SQL"
-        sistema.xaiService -> sistema.relationalDb "Explicaciones y alertas" "SQL"
-        sistema.lambdaInteracciones -> sistema.relationalDb "Interacciones procesadas" "SQL"
-        sistema.lambdaNotificaciones -> sistema.relationalDb "Notificaciones" "SQL"
     }
 
     views {
@@ -135,7 +125,7 @@ workspace "SWARD - Vista reducida de microservicios" "Modelo C4 condensado y com
             title "SWARD - Arquitectura de microservicios (vista reducida)"
             description "Usuarios, todos los microservicios y las lambdas de ingesta + event-driven. Flujos esenciales."
             include *
-            autoLayout lr 260 130
+            autoLayout tb 200 110
         }
 
         styles {
