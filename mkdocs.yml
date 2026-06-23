@@ -50,6 +50,7 @@ nav:
   - Inicio: index.md
   - Arquitectura: arquitectura.md
   - Operaciones: operaciones.md
+  - Migraciones (Alembic): migraciones.md
   - Secrets: secrets-runbook.md
   - Diagramas:
       - Resumen: diagramas.md
