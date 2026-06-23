@@ -1,3 +1,17 @@
 .DS_Store
 *.pyc
 __pycache__/
+
+# Entorno virtual de Python
+.venv/
+venv/
+
+# Sitio generado por MkDocs
+/site/
+
+# Exports sueltos de diagramas (las fuentes versionadas viven en docs/diagramas/)
+/TP202610051_C4/
+/TP202610051_C4_Structurizr_2026-05-10.dsl
+/TP202610051_Diagramas_Clases_Hexagonal_2026-05-15.puml
+/TP202610051_PlantUML_Clases_Hexagonal_2026-05-15.zip
+/TP202610051_PlantUML_Clases_Hexagonal_2026-05-15/

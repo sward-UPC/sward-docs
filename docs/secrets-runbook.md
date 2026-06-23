@@ -125,7 +125,7 @@ Después de reconstruir la infra desde cero, ejecutar en este orden:
 
 1. **`cdk deploy`** en `sward-infra` (reconstruye todos los stacks; regenera secretos aleatorios).
 2. **Re-obtener** los dos valores que cambian:
-   - `SWARD_API_URL` → comando de [§3.1](#31-sward_api_url-url-de-cloudfront--output-de-cdk).
+   - `SWARD_API_URL` → comando de [§3.1](#31-sward_api_url-url-de-cloudfront-output-de-cdk).
    - `TRAZABILIDAD_SERVICE_KEY` → comando de [§3.2](#32-trazabilidad_service_key-secrets-manager).
 3. **Re-setear** esos GitHub secrets en los repos que los usan:
    - `sward-UPC/sward-ms-recomendacion` (`SWARD_API_URL`, `TRAZABILIDAD_SERVICE_KEY`).

@@ -6,10 +6,11 @@ su **propia base de datos PostgreSQL (RDS)** y publica/consume **eventos de domi
 **Amazon EventBridge** (`sward-event-bus`). El procesamiento asíncrono se delega a **funciones
 Lambda**. El frontend es una SPA de **React** (GitHub Pages) que entra por **CloudFront + ALB**.
 
-> El patrón hexagonal común (estructura `domains / application / ports / infrastructure / routers`,
-> regla de dependencias hacia adentro, eventos emitidos por el aggregate y publicados por la capa de
-> aplicación) está descrito en detalle en [`../HEXAGONAL.md`](../HEXAGONAL.md). Aquí se describe **qué
-> hace cada servicio** y **cómo fluyen los datos entre ellos**.
+!!! info "Patrón hexagonal común"
+    La estructura `domains / application / ports / infrastructure / routers`, la regla de
+    dependencias hacia adentro y los eventos emitidos por el *aggregate* y publicados por la capa
+    de aplicación están descritos en detalle en el documento `HEXAGONAL.md` del repositorio de
+    convenciones. Aquí se describe **qué hace cada servicio** y **cómo fluyen los datos entre ellos**.
 
 ---
 
@@ -102,7 +103,7 @@ Cinco funciones Lambda absorben el trabajo asíncrono y la ingesta programada:
 
 La infraestructura se define con **AWS CDK** (repo `sward-infra`, varios stacks). El encendido /
 apagado para ahorro de costos se opera con workflows de GitHub Actions
-(ver [`operaciones-encender-apagar.md`](./operaciones-encender-apagar.md)).
+(ver [Operaciones](operaciones.md)).
 
 ---
 
@@ -111,20 +112,13 @@ apagado para ahorro de costos se opera con workflows de GitHub Actions
 ### Flujo 1 — Ingesta Moodle → SWARD
 Trae los datos académicos reales desde Moodle hacia el núcleo de SWARD.
 
-```
-EventBridge (schedule 15 min)
-      │
-      ▼
-lambda-moodle-sync ── POST /lms/sync ──► ms-integracion-lms (SincronizarMoodleUseCase)
-                                                │  wstoken
-                                                ▼
-                                        Moodle REST API (core_course_*, mod_quiz_*)
-                                                │
-                                                ▼
-                                        PostgreSQL (lms_db): cursos, actividades, interacciones
-                                                │
-                                                ▼
-                                        ms-trazabilidad (interacciones / progreso para KT)
+```mermaid
+flowchart TD
+    EB[EventBridge<br/>schedule 15 min] --> L[lambda-moodle-sync]
+    L -- POST /lms/sync --> MS[ms-integracion-lms<br/>SincronizarMoodleUseCase]
+    MS -- wstoken --> MOODLE[Moodle REST API<br/>core_course_*, mod_quiz_*]
+    MOODLE --> PG[(PostgreSQL · lms_db<br/>cursos, actividades, interacciones)]
+    PG --> TRAZ[ms-trazabilidad<br/>interacciones / progreso para KT]
 ```
 
 La lambda se dispara cada 15 minutos, gatilla la sincronización en `ms-integracion-lms`, este extrae
@@ -134,15 +128,12 @@ construye las secuencias de knowledge tracing.
 ### Flujo 2 — Knowledge tracing (recomendación explicable)
 Convierte el historial del estudiante en una recomendación justificada.
 
-```
-ms-trazabilidad ──(historial de interacciones, insumo SAKT)──► ms-recomendacion
-                                                                    │
-                                ┌───────── carga checkpoint SAKT ◄──┘
-                                ▼                                   │
-                          S3 (sward-models)            ms-cursos-recursos (candidatos)
-                                                                    │
-                                                                    ▼
-                                                        ms-xai (explicación: pesos de atención)
+```mermaid
+flowchart LR
+    TRAZ[ms-trazabilidad] -- historial de interacciones<br/>insumo SAKT --> REC[ms-recomendacion]
+    S3[(S3 · sward-models<br/>checkpoint SAKT)] -- carga checkpoint --> REC
+    CR[ms-cursos-recursos<br/>candidatos] --> REC
+    REC -- explicación:<br/>pesos de atención --> XAI[ms-xai]
 ```
 
 `ms-recomendacion` lee el historial de `ms-trazabilidad`, carga el modelo SAKT desde S3, selecciona
@@ -152,17 +143,15 @@ explicación (pesos de atención) para acompañar la recomendación y, en su cas
 ### Flujo 3 — Event-driven (asíncrono)
 Desacopla efectos secundarios (persistencia de interacciones, alertas, notificaciones).
 
-```
-ms-trazabilidad ─ Interaccion/Feedback/Logro/Riesgo ─┐
-ms-recomendacion ─ RecomendacionGenerada ────────────┤
-ms-usuarios ─ UsuarioRegistrado ─────────────────────┤
-                                                      ▼
-                                          EventBridge (sward-event-bus)
-                                                      │  reglas → SQS
-                  ┌───────────────────────────────────┼───────────────────────────────┐
-                  ▼                                   ▼                                 ▼
-       lambda-interacciones               lambda-alertas (→ AlertaCreada)      lambda-notificaciones
-       (persiste interacciones)           (evalúa riesgo)                      (persiste notificaciones)
+```mermaid
+flowchart TD
+    TRAZ[ms-trazabilidad] -- Interaccion / Feedback<br/>Logro / Riesgo --> EB[EventBridge<br/>sward-event-bus]
+    REC[ms-recomendacion] -- RecomendacionGenerada --> EB
+    USR[ms-usuarios] -- UsuarioRegistrado --> EB
+    EB -- reglas → SQS --> LI[lambda-interacciones<br/>persiste interacciones]
+    EB -- reglas → SQS --> LA[lambda-alertas<br/>evalúa riesgo → AlertaCreada]
+    EB -- reglas → SQS --> LN[lambda-notificaciones<br/>persiste notificaciones]
+    LA -. AlertaCreada .-> LN
 ```
 
 Los servicios publican eventos de dominio en EventBridge; las **reglas** los enrutan (normalmente a
@@ -174,8 +163,9 @@ través de **SQS**) hacia las lambdas, que ejecutan el trabajo asíncrono. `lamb
 ## 5. Vista C4 (contenedores)
 
 El diagrama C4 reducido (Structurizr) que resume estos tres ejes está en
-[`diagramas/SWARD_C4_componentes_shortpaper.dsl`](./diagramas/SWARD_C4_componentes_shortpaper.dsl).
-Instrucciones de render en [`diagramas/README.md`](./diagramas/README.md).
+[`diagramas/SWARD_C4_componentes_shortpaper.dsl`](diagramas/SWARD_C4_componentes_shortpaper.dsl).
+Las instrucciones de render y el resto de figuras del proyecto están en la
+sección [Diagramas](diagramas.md).
 
 > **Estado del código (verificado):** el pipeline funciona end-to-end con **datos reales**. La ingesta
 > trae cursos, actividades, **notas e interacciones** de Moodle; el SAKT corre en modo **real** (en ECS

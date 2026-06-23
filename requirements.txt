@@ -1,0 +1,4 @@
+# Documentación de SWARD — MkDocs Material
+# Mermaid se renderiza con el soporte nativo de Material (pymdownx.superfences),
+# por lo que no se necesita un plugin adicional de Mermaid.
+mkdocs-material>=9.5
