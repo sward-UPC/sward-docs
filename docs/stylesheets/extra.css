@@ -1,0 +1,77 @@
+/* ============================================================
+   SWARD · Documentación — estilos de marca y pulido visual
+   ============================================================ */
+
+/* ---- Paleta de marca SWARD (indigo/violeta, igual que la app) ---- */
+:root {
+  --md-primary-fg-color: #4f46e5;
+  --md-primary-fg-color--light: #6366f1;
+  --md-primary-fg-color--dark: #4338ca;
+  --md-accent-fg-color: #7c3aed;
+  --md-typeset-a-color: #4f46e5;
+}
+[data-md-color-scheme="slate"] {
+  --md-typeset-a-color: #a5b4fc;
+  --md-accent-fg-color: #a78bfa;
+}
+
+/* ---- Figuras / diagramas ----
+   Los SVG (PlantUML / C4) tienen texto oscuro sobre fondo transparente;
+   les damos un fondo blanco para que se lean también en modo oscuro. */
+.md-typeset figure {
+  margin: 1.6rem auto;
+  max-width: 100%;
+}
+.md-typeset figure img {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.10);
+  max-width: 100%;
+  height: auto;
+}
+.md-typeset figcaption {
+  font-size: 0.76rem;
+  color: var(--md-default-fg-color--light);
+  margin-top: 0.55rem;
+}
+
+/* ---- Tarjetas (grid cards) del landing ---- */
+.md-typeset .grid.cards > :is(ul, ol) > li,
+.md-typeset .grid > .card {
+  border-radius: 12px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.md-typeset .grid.cards > :is(ul, ol) > li:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(79, 70, 229, 0.16);
+  border-color: var(--md-accent-fg-color);
+}
+
+/* ---- Títulos con más carácter ---- */
+.md-typeset h1 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.md-typeset h2 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ---- Detalles finos ---- */
+.md-typeset table:not([class]) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+.md-typeset pre > code {
+  border-radius: 8px;
+}
+.md-header {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Badges/“pills” en línea (si se usan en el landing) */
+.md-typeset .twemoji {
+  vertical-align: -0.12em;
+}

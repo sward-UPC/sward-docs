@@ -39,7 +39,12 @@ theme:
     - content.code.copy
     - content.tabs.link
     - content.action.edit
+    - content.tooltips
+    - navigation.footer
     - toc.follow
+
+extra_css:
+  - stylesheets/extra.css
 
 nav:
   - Inicio: index.md
