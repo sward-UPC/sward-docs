@@ -1,6 +1,8 @@
 ---
-hide:
-  - navigation
+id: index
+title: SWARD · Documentación
+slug: /
+sidebar_label: Inicio
 ---
 
 # SWARD · Documentación
@@ -31,45 +33,14 @@ React** desplegada en GitHub Pages.
 
 ## Explora la documentación
 
-<div class="grid cards" markdown>
-
--   :material-sitemap:{ .lg .middle } **Arquitectura**
-
-    ---
-
-    Los 6 microservicios, las 5 lambdas, la plataforma AWS y los 3 flujos principales
-    (ingesta, knowledge tracing, event-driven).
-
-    [:octicons-arrow-right-24: Ver arquitectura](arquitectura.md)
-
--   :material-power:{ .lg .middle } **Operaciones**
-
-    ---
-
-    Cómo **prender** y **apagar** la infraestructura para ahorrar costos, el stop nocturno
-    automático y el modo dev.
-
-    [:octicons-arrow-right-24: Encender / apagar](operaciones.md)
-
--   :material-key-variant:{ .lg .middle } **Secrets Runbook**
-
-    ---
-
-    Reconfigurar los GitHub secrets tras reconstruir la infra: qué va en qué repo, cuáles se
-    regeneran y cómo obtener cada valor.
-
-    [:octicons-arrow-right-24: Ver runbook](secrets-runbook.md)
-
--   :material-graph:{ .lg .middle } **Diagramas**
-
-    ---
-
-    C4 (Structurizr), clases UML hexagonales por microservicio, integración Moodle y flujo
-    pyKT, con el pseudocódigo del DKT.
-
-    [:octicons-arrow-right-24: Ver diagramas](diagramas.md)
-
-</div>
+- **[Arquitectura](arquitectura.md)** — Los 6 microservicios, las 5 lambdas, la plataforma AWS y los
+  3 flujos principales (ingesta, knowledge tracing, event-driven).
+- **[Operaciones](operaciones.md)** — Cómo **prender** y **apagar** la infraestructura para ahorrar
+  costos, el stop nocturno automático y el modo dev.
+- **[Secrets Runbook](secrets-runbook.md)** — Reconfigurar los GitHub secrets tras reconstruir la
+  infra: qué va en qué repo, cuáles se regeneran y cómo obtener cada valor.
+- **[Diagramas](diagramas.md)** — C4 (Structurizr), clases UML hexagonales por microservicio,
+  integración Moodle y flujo pyKT, con el pseudocódigo del DKT.
 
 ---
 
@@ -112,10 +83,11 @@ flowchart TB
     class LMSDB,S3 db;
 ```
 
-!!! tip "¿De dónde sale esta vista?"
-    Es el resumen de los tres ejes narrativos del modelo **C4** del proyecto. El diagrama C4
-    completo (Structurizr) y el resto de figuras están en la sección
-    [Diagramas](diagramas.md).
+:::tip ¿De dónde sale esta vista?
+Es el resumen de los tres ejes narrativos del modelo **C4** del proyecto. El diagrama C4
+completo (Structurizr) y el resto de figuras están en la sección
+[Diagramas](diagramas.md).
+:::
 
 ---
 

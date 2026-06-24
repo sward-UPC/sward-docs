@@ -2,14 +2,22 @@
 *.pyc
 __pycache__/
 
-# Entorno virtual de Python
+# Entorno virtual de Python (legado MkDocs)
 .venv/
 venv/
 
-# Sitio generado por MkDocs
-/site/
+# Dependencias y build de Docusaurus
+node_modules/
+build/
+.docusaurus/
+.cache-loader/
 
-# Exports sueltos de diagramas (las fuentes versionadas viven en docs/diagramas/)
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Exports sueltos de diagramas (las fuentes versionadas viven en static/diagramas/)
 /TP202610051_C4/
 /TP202610051_C4_Structurizr_2026-05-10.dsl
 /TP202610051_Diagramas_Clases_Hexagonal_2026-05-15.puml

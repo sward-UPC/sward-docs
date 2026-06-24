@@ -1,0 +1,97 @@
+/* ============================================================
+   SWARD · Documentación — marca y pulido visual (Docusaurus / Infima)
+   Paleta: primario violeta #6d28d9 · acento cian #0891b2
+   ============================================================ */
+
+:root {
+  /* --- Primario: violeta #6d28d9 --- */
+  --ifm-color-primary: #6d28d9;
+  --ifm-color-primary-dark: #6122c3;
+  --ifm-color-primary-darker: #5c20b8;
+  --ifm-color-primary-darkest: #4c1b98;
+  --ifm-color-primary-light: #7a3bde;
+  --ifm-color-primary-lighter: #8146e0;
+  --ifm-color-primary-lightest: #9a6ce8;
+
+  /* --- Acento cian #0891b2 (enlaces y detalles) --- */
+  --sward-accent: #0891b2;
+  --sward-accent-light: #0ca5c9;
+  --ifm-link-color: #0891b2;
+  --ifm-link-hover-color: #6d28d9;
+
+  --ifm-code-font-size: 95%;
+  --ifm-heading-font-weight: 700;
+  --docusaurus-highlighted-code-line-bg: rgba(109, 40, 217, 0.1);
+}
+
+/* Modo oscuro: violeta más claro y legible, acento cian luminoso */
+[data-theme='dark'] {
+  --ifm-color-primary: #a78bfa;
+  --ifm-color-primary-dark: #8f6cf8;
+  --ifm-color-primary-darker: #835df7;
+  --ifm-color-primary-darkest: #6330f3;
+  --ifm-color-primary-light: #bfaafc;
+  --ifm-color-primary-lighter: #cbb9fc;
+  --ifm-color-primary-lightest: #ebe3fe;
+
+  --sward-accent: #22d3ee;
+  --sward-accent-light: #67e8f9;
+  --ifm-link-color: #22d3ee;
+  --ifm-link-hover-color: #c4b5fd;
+
+  --docusaurus-highlighted-code-line-bg: rgba(167, 139, 250, 0.15);
+}
+
+/* ---- Títulos con más carácter ---- */
+.markdown h1 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.markdown h2 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ---- Figuras / diagramas (SVG PlantUML/C4) ----
+   Texto oscuro sobre fondo transparente: fondo blanco para que se lean
+   también en modo oscuro. */
+.markdown figure {
+  margin: 1.6rem auto;
+  max-width: 100%;
+  text-align: center;
+}
+.markdown figure img,
+.markdown img[src*='/diagramas/'] {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+  height: auto;
+}
+.markdown figcaption {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600);
+  margin-top: 0.55rem;
+}
+
+/* ---- Header con sombra sutil ---- */
+.navbar {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* ---- Detalles finos ---- */
+.markdown table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+.markdown pre code {
+  border-radius: 8px;
+}
+
+/* ---- Diagramas Mermaid centrados ---- */
+.docusaurus-mermaid-container {
+  text-align: center;
+  margin: 1.5rem 0;
+}

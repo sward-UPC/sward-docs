@@ -1,12 +1,11 @@
-# Build + deploy de la documentación (MkDocs Material) a GitHub Pages.
+# Build + deploy de la documentación (Docusaurus) a GitHub Pages.
 #
-# NOTA IMPORTANTE — repositorios privados:
-#   GitHub Pages en repos PRIVADOS requiere un plan de pago (GitHub Pro / Team /
-#   Enterprise). Si este repo es privado y está en un plan gratuito, el deploy a
-#   Pages fallará. En ese caso, la documentación se ve igual en local con:
-#       pip install -r requirements.txt && mkdocs serve   ->  http://localhost:8000
-#   Si el repo se hace público (o el plan lo permite), este workflow publica el
-#   sitio automáticamente en cada push a main.
+# NOTA — repositorios privados:
+#   GitHub Pages en repos PRIVADOS requiere un plan de pago. Si este repo es
+#   privado y está en un plan gratuito, el deploy a Pages fallará. En local:
+#       npm ci && npm run build && npm run serve  ->  http://localhost:3000
+#   Si el repo es público (o el plan lo permite), este workflow publica en cada
+#   push a main.
 
 name: Documentación
 
@@ -31,21 +30,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-          cache: pip
+          node-version: 20
+          cache: npm
 
       - name: Instalar dependencias
-        run: pip install -r requirements.txt
+        run: npm ci
 
-      - name: Build (estricto)
-        run: mkdocs build --strict
+      - name: Build (Docusaurus)
+        run: npm run build
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
 
       - name: Subir artefacto de Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: build
 
   deploy:
     needs: build

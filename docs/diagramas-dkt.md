@@ -1,4 +1,10 @@
-# Diagramas — DKT y pykt
+---
+id: diagramas-dkt
+title: Diagramas — DKT y pyKT
+sidebar_label: DKT y pyKT
+---
+
+# Diagramas — DKT y pyKT
 
 > Documento de apoyo para el paper/tesis SWARD.
 > Los diagramas Mermaid se renderizan en GitHub, Notion, VS Code (extensión *Markdown Preview Mermaid*) o en https://mermaid.live para exportarlos como PNG/SVG.
