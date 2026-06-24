@@ -1,3 +1,9 @@
+---
+id: operaciones
+title: Operaciones — Encender y apagar la infraestructura
+sidebar_label: Operaciones
+---
+
 # Operaciones — Encender y apagar la infraestructura
 
 > **Por qué importa.** La infraestructura de SWARD (ECS Fargate, RDS PostgreSQL, lambdas con

@@ -2,7 +2,7 @@
 
 ![Tesis](https://img.shields.io/badge/proyecto-tesis-blueviolet)
 ![Privado](https://img.shields.io/badge/repo-privado-lightgrey)
-![Docs](https://img.shields.io/badge/docs-MkDocs%20Material-526CFE)
+![Docs](https://img.shields.io/badge/docs-Docusaurus-6d28d9)
 ![Cloud](https://img.shields.io/badge/cloud-AWS-orange)
 
 Documentación de **SWARD** (*Sistema Web de Recomendación Adaptativa y Explicable*): un **tutor
@@ -11,20 +11,24 @@ el siguiente recurso de forma **explicable** (XAI), implementado como **microser
 event-driven** sobre AWS.
 
 > Este repositorio (`sward-docs`) es la documentación central transversal del proyecto. Todo el
-> contenido vive en [`docs/`](./docs/) y se publica como un sitio **MkDocs Material**.
+> contenido vive en [`docs/`](./docs/) y se publica como un sitio **Docusaurus** en GitHub Pages.
 
 ## Cómo ver la documentación
 
 ```bash
-pip install -r requirements.txt
-mkdocs serve
+npm install
+npm start
 ```
 
-Abre <http://localhost:8000>. Para generar el sitio estático:
+Abre <http://localhost:3000/sward-docs/>. Para generar el sitio estático:
 
 ```bash
-mkdocs build --strict   # salida en ./site
+npm run build     # salida en ./build
+npm run serve     # sirve ./build localmente
 ```
+
+Los diagramas (SVG/PNG, fuentes `.dsl` de Structurizr y `.puml` de PlantUML) viven en
+[`static/diagramas/`](./static/diagramas/) y se sirven como archivos estáticos.
 
 ## Contenido
 

@@ -1,3 +1,9 @@
+---
+id: arquitectura
+title: Arquitectura de SWARD
+sidebar_label: Arquitectura
+---
+
 # Arquitectura de SWARD
 
 SWARD es un conjunto de **microservicios hexagonales (puertos y adaptadores) + DDD**, comunicados
@@ -6,11 +12,12 @@ su **propia base de datos PostgreSQL (RDS)** y publica/consume **eventos de domi
 **Amazon EventBridge** (`sward-event-bus`). El procesamiento asíncrono se delega a **funciones
 Lambda**. El frontend es una SPA de **React** (GitHub Pages) que entra por **CloudFront + ALB**.
 
-!!! info "Patrón hexagonal común"
-    La estructura `domains / application / ports / infrastructure / routers`, la regla de
-    dependencias hacia adentro y los eventos emitidos por el *aggregate* y publicados por la capa
-    de aplicación están descritos en detalle en el documento `HEXAGONAL.md` del repositorio de
-    convenciones. Aquí se describe **qué hace cada servicio** y **cómo fluyen los datos entre ellos**.
+:::info Patrón hexagonal común
+La estructura `domains / application / ports / infrastructure / routers`, la regla de
+dependencias hacia adentro y los eventos emitidos por el *aggregate* y publicados por la capa
+de aplicación están descritos en detalle en el documento `HEXAGONAL.md` del repositorio de
+convenciones. Aquí se describe **qué hace cada servicio** y **cómo fluyen los datos entre ellos**.
+:::
 
 ---
 
@@ -163,7 +170,7 @@ través de **SQS**) hacia las lambdas, que ejecutan el trabajo asíncrono. `lamb
 ## 5. Vista C4 (contenedores)
 
 El diagrama C4 reducido (Structurizr) que resume estos tres ejes está en
-[`diagramas/SWARD_C4_componentes_shortpaper.dsl`](diagramas/SWARD_C4_componentes_shortpaper.dsl).
+[`SWARD_C4_componentes_shortpaper.dsl`](pathname:///diagramas/SWARD_C4_componentes_shortpaper.dsl).
 Las instrucciones de render y el resto de figuras del proyecto están en la
 sección [Diagramas](diagramas.md).
 

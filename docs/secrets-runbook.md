@@ -1,3 +1,9 @@
+---
+id: secrets-runbook
+title: Runbook — Reconfigurar GitHub Secrets tras reconstruir la infra
+sidebar_label: Secrets
+---
+
 # Runbook — Reconfigurar GitHub Secrets tras reconstruir la infra
 
 > **Para qué es este documento.** Cuando se **reconstruye la infraestructura desde cero**
@@ -51,7 +57,7 @@ Se **regeneran** cada vez que se reconstruye la infra → cualquier GitHub secre
 
 ## 3. Cómo OBTENER cada valor (comandos exactos)
 
-### 3.1 `SWARD_API_URL` (URL de CloudFront — output de CDK)
+### 3.1 `SWARD_API_URL` (URL de CloudFront — output de CDK) {#31-sward_api_url-url-de-cloudfront-output-de-cdk}
 
 ```bash
 aws cloudformation describe-stacks \
@@ -61,7 +67,7 @@ aws cloudformation describe-stacks \
   --output text
 ```
 
-### 3.2 `TRAZABILIDAD_SERVICE_KEY` (Secrets Manager)
+### 3.2 `TRAZABILIDAD_SERVICE_KEY` (Secrets Manager) {#32-trazabilidad_service_key-secrets-manager}
 
 Es la **service-key de un *caller* que `ms-trazabilidad` autoriza** (no es un secreto "de"
 trazabilidad, sino la clave con la que un cliente se identifica ante él). Empieza por la de

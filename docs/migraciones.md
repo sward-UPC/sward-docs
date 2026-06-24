@@ -1,3 +1,9 @@
+---
+id: migraciones
+title: Migraciones de base de datos — Alembic
+sidebar_label: Migraciones (Alembic)
+---
+
 # Migraciones de base de datos — Alembic
 
 > **Por qué importa.** Antes, cada microservicio creaba/actualizaba su esquema **en el arranque del
