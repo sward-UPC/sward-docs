@@ -30,6 +30,11 @@ const sidebars = {
       label: 'Secrets',
     },
     {
+      type: 'doc',
+      id: 'sprints',
+      label: 'Sprints de TP2',
+    },
+    {
       type: 'category',
       label: 'Diagramas',
       items: [
